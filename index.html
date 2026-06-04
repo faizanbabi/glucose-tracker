@@ -421,7 +421,7 @@ async function estimateCarbs() {
     estimatedItems = JSON.parse(raw.replace(/```json|```/g, '').trim());
     renderFoodItems();
   } catch(e) {
-    alert('Could not estimate. Check your API key or enter carbs manually.');
+    alert('Error: ' + (e.message || e.toString()));
   }
   btn.style.display = 'block'; loading.classList.remove('show');
 }
