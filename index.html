@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Glucose">
+<meta name="theme-color" content="#f5f0e8">
+<title>Glucose</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #f5f0e8;
+  --cream2: #ede7d9;
+  --cream3: #e4dccb;
+  --paper: #faf8f4;
+  --ink: #1a1612;
+  --ink2: #4a4540;
+  --ink3: #8a8278;
+  --ink4: #b8b0a5;
+  --green: #2d6a4f;
+  --green-light: #e8f4ee;
+  --green-mid: #95c4aa;
+  --amber: #b45309;
+  --amber-light: #fef3c7;
+  --red: #9b2335;
+  --red-light: #fde8eb;
+  --blue: #1e4d8c;
+  --blue-light: #e8f0fb;
+  --border: #ddd5c5;
+  --shadow: 0 1px 3px rgba(26,22,18,0.08), 0 4px 12px rgba(26,22,18,0.04);
+  --shadow-lg: 0 4px 16px rgba(26,22,18,0.1), 0 12px 40px rgba(26,22,18,0.06);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--cream); color: var(--ink); font-family: 'DM Sans', sans-serif; font-size: 15px; overscroll-behavior: none; }
+
+.app { display: flex; flex-direction: column; height: 100dvh; max-width: 430px; margin: 0 auto; position: relative; }
+
+/* Header */
+.header { padding: 52px 20px 14px; background: var(--cream); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.header-title { font-family: 'Lora', serif; font-size: 26px; font-weight: 600; letter-spacing: -0.3px; color: var(--ink); }
+.header-date { font-size: 12px; color: var(--ink3); margin-top: 2px; font-family: 'DM Mono', monospace; }
+.iob-pill { font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 99px; background: var(--amber-light); color: var(--amber); border: 1px solid #f6d860; display: none; }
+.iob-pill.show { display: block; }
+
+/* Content */
+.content { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 90px; background: var(--cream); }
+
+/* Nav */
+.nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: rgba(245,240,232,0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid var(--border); display: flex; padding: 8px 0 20px; z-index: 100; }
+.nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; color: var(--ink4); font-size: 10px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; padding: 5px 0; letter-spacing: .03em; transition: color .2s; }
+.nav-btn svg { width: 20px; height: 20px; stroke-width: 1.6; }
+.nav-btn.active { color: var(--green); }
+
+/* Sections */
+.section { display: none; }
+.section.active { display: block; }
+
+/* Cards */
+.card { background: var(--paper); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+.card-title { font-family: 'Lora', serif; font-size: 13px; font-weight: 500; color: var(--ink3); margin-bottom: 14px; letter-spacing: .02em; }
+
+/* Fields */
+.field { margin-bottom: 12px; }
+.field:last-child { margin-bottom: 0; }
+.field label { display: block; font-size: 11px; font-weight: 500; color: var(--ink3); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .06em; }
+.field input, .field select, .field textarea {
+  width: 100%; background: var(--cream); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--ink); font-family: 'DM Sans', sans-serif; font-size: 15px; padding: 11px 13px;
+  outline: none; appearance: none; -webkit-appearance: none; transition: border-color .2s, background .2s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--green-mid); background: var(--paper); }
+.field textarea { resize: none; line-height: 1.5; }
+.field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8278' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; padding-right: 34px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+/* Buttons */
+.btn { width: 100%; padding: 13px; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; border: none; cursor: pointer; transition: opacity .15s, transform .1s; }
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn-primary { background: var(--green); color: #fff; }
+.btn-primary:hover { opacity: .9; }
+.btn-ghost { background: var(--cream2); color: var(--ink); border: 1px solid var(--border); }
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+
+/* Wait time banner */
+.wait-banner { border-radius: var(--radius-sm); padding: 13px 15px; margin-bottom: 12px; display: none; }
+.wait-banner.show { display: flex; gap: 10px; align-items: flex-start; }
+.wait-banner.green { background: var(--green-light); border: 1px solid var(--green-mid); }
+.wait-banner.amber { background: var(--amber-light); border: 1px solid #f6d860; }
+.wait-banner.red { background: var(--red-light); border: 1px solid #f4a0ab; }
+.wait-banner.blue { background: var(--blue-light); border: 1px solid #a8c0e8; }
+.wait-icon { font-size: 18px; flex-shrink: 0; }
+.wait-title { font-size: 14px; font-weight: 500; color: var(--ink); }
+.wait-sub { font-size: 12px; color: var(--ink2); margin-top: 2px; line-height: 1.5; }
+
+/* IOB warning */
+.iob-warning { background: var(--amber-light); border: 1px solid #f6d860; border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 12px; display: none; font-size: 13px; color: var(--amber); line-height: 1.5; }
+.iob-warning.show { display: block; }
+
+/* AI estimator */
+.ai-box { background: var(--paper); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+.ai-hint { font-size: 12px; color: var(--ink3); margin-bottom: 10px; }
+.ai-loading { display: none; align-items: center; gap: 8px; font-size: 13px; color: var(--ink3); padding: 8px 0; }
+.ai-loading.show { display: flex; }
+.spinner { width: 15px; height: 15px; border: 2px solid var(--cream3); border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.food-list { margin-top: 14px; display: none; }
+.food-list.show { display: block; }
+.food-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.food-row:last-child { border-bottom: none; }
+.food-name { font-size: 14px; color: var(--ink); }
+.food-portion { font-size: 12px; color: var(--ink3); margin-top: 1px; }
+.food-carb-input { width: 68px; background: var(--cream); border: 1px solid var(--border); border-radius: 6px; color: var(--ink); font-family: 'DM Mono', monospace; font-size: 14px; padding: 6px 10px; text-align: right; outline: none; }
+.food-total { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; margin-top: 4px; font-weight: 500; font-size: 14px; }
+.food-total-val { font-family: 'DM Mono', monospace; font-size: 20px; color: var(--green); font-weight: 500; }
+
+/* Dose result */
+.dose-result { display: none; background: var(--paper); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 12px; box-shadow: var(--shadow); }
+.dose-result.show { display: block; }
+.dose-number { font-family: 'Lora', serif; font-size: 52px; font-weight: 600; color: var(--ink); line-height: 1; letter-spacing: -1px; }
+.dose-sub { font-size: 13px; color: var(--ink3); margin-top: 4px; }
+.dose-breakdown { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.dose-line { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink3); padding: 4px 0; }
+.dose-line span:last-child { font-family: 'DM Mono', monospace; color: var(--ink); font-weight: 500; }
+.dose-iob-note { font-size: 12px; color: var(--amber); margin-top: 8px; padding: 8px 10px; background: var(--amber-light); border-radius: 6px; }
+.dose-warning { margin-top: 12px; padding: 10px 12px; background: var(--cream2); border-radius: var(--radius-sm); font-size: 12px; color: var(--ink3); line-height: 1.5; border: 1px solid var(--border); }
+
+/* Post meal CTA */
+.post-meal-cta { background: var(--green); border-radius: var(--radius); padding: 18px; margin-bottom: 12px; color: #fff; box-shadow: var(--shadow-lg); }
+.post-meal-cta-title { font-family: 'Lora', serif; font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.post-meal-cta-sub { font-size: 13px; opacity: .85; margin-bottom: 14px; }
+.post-meal-cta .btn { background: #fff; color: var(--green); font-weight: 600; }
+
+/* Outcome card */
+.outcome-card { border-radius: var(--radius-sm); padding: 14px; margin-top: 12px; display: none; }
+.outcome-card.show { display: block; }
+.outcome-card.good { background: var(--green-light); border: 1px solid var(--green-mid); }
+.outcome-card.high { background: var(--amber-light); border: 1px solid #f6d860; }
+.outcome-card.low { background: var(--red-light); border: 1px solid #f4a0ab; }
+.outcome-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+.outcome-sub { font-size: 12px; color: var(--ink2); margin-top: 3px; line-height: 1.5; }
+
+/* Metrics */
+.metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.metric { background: var(--paper); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
+.metric-val { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; }
+.metric-lbl { font-size: 10px; color: var(--ink3); margin-top: 4px; text-transform: uppercase; letter-spacing: .06em; }
+.metric.green .metric-val { color: var(--green); }
+.metric.amber .metric-val { color: var(--amber); }
+.metric.red .metric-val { color: var(--red); }
+
+/* History */
+.filter-row { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 2px; }
+.filter-row::-webkit-scrollbar { display: none; }
+.filter-btn { flex-shrink: 0; padding: 6px 14px; border-radius: 99px; font-size: 12px; font-family: 'DM Sans', sans-serif; font-weight: 500; border: 1px solid var(--border); background: var(--paper); color: var(--ink3); cursor: pointer; }
+.filter-btn.active { background: var(--green); color: #fff; border-color: var(--green); }
+.log-entry { display: flex; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+.log-time { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink4); min-width: 38px; padding-top: 2px; line-height: 1.6; }
+.log-body { flex: 1; }
+.log-title { font-size: 14px; font-weight: 500; color: var(--ink); }
+.log-detail { font-size: 12px; color: var(--ink3); margin-top: 2px; line-height: 1.5; }
+.log-badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 99px; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .05em; }
+.badge-meal { background: var(--green-light); color: var(--green); }
+.badge-glucose { background: var(--amber-light); color: var(--amber); }
+.badge-insulin { background: var(--blue-light); color: var(--blue); }
+.badge-complete { background: var(--green-light); color: var(--green); }
+.log-del { background: none; border: none; color: var(--ink4); font-size: 18px; cursor: pointer; padding: 4px; flex-shrink: 0; }
+.empty-state { text-align: center; padding: 40px 20px; color: var(--ink4); font-size: 14px; font-family: 'Lora', serif; font-style: italic; }
+
+/* Settings */
+.section-label { font-size: 11px; font-weight: 500; color: var(--ink3); text-transform: uppercase; letter-spacing: .07em; margin: 18px 0 8px; }
+.section-label:first-child { margin-top: 0; }
+.setting-item { display: flex; justify-content: space-between; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--border); }
+.setting-item:last-child { border-bottom: none; }
+.setting-name { font-size: 14px; font-weight: 500; }
+.setting-desc { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+.setting-input { width: 90px; background: var(--cream); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--ink); font-family: 'DM Mono', monospace; font-size: 15px; padding: 8px 11px; text-align: right; outline: none; }
+.note { font-size: 12px; color: var(--ink3); line-height: 1.6; margin-top: 8px; }
+
+/* Countdown */
+.countdown { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; color: var(--green); text-align: center; padding: 8px 0 4px; }
+.countdown-label { font-size: 12px; color: var(--ink3); text-align: center; margin-bottom: 12px; }
+
+/* Insights */
+.insight-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.insight-row:last-child { border-bottom: none; }
+.insight-val { font-family: 'DM Mono', monospace; font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="header-title">Glucose</div>
+        <div class="header-date" id="header-date"></div>
+      </div>
+      <div class="iob-pill" id="iob-pill"></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- BEFORE MEAL -->
+    <div id="sec-dose" class="section active">
+
+      <!-- Post-meal CTA (shown when there's an open meal) -->
+      <div class="post-meal-cta" id="post-meal-cta" style="display:none">
+        <div class="post-meal-cta-title">Time to check your glucose</div>
+        <div class="post-meal-cta-sub" id="post-meal-cta-sub">Log your reading from your last meal</div>
+        <button class="btn" onclick="showPostMealModal()">Log post-meal glucose</button>
+      </div>
+
+      <!-- Wait time banner -->
+      <div class="wait-banner" id="wait-banner">
+        <div class="wait-icon" id="wait-icon"></div>
+        <div><div class="wait-title" id="wait-title"></div><div class="wait-sub" id="wait-sub"></div></div>
+      </div>
+
+      <!-- IOB warning -->
+      <div class="iob-warning" id="iob-warning"></div>
+
+      <!-- AI food estimator -->
+      <div class="ai-box">
+        <div class="ai-hint">Describe what you're eating — AI will estimate the carbs</div>
+        <div class="field" style="margin-bottom:10px">
+          <textarea id="food-text" rows="2" placeholder="e.g. 2 rotis, dal makhani, small bowl rice"></textarea>
+        </div>
+        <button class="btn btn-primary" id="estimate-btn" onclick="estimateCarbs()">Estimate carbs</button>
+        <div class="ai-loading" id="ai-loading"><div class="spinner"></div> Estimating with AI...</div>
+        <div class="food-list" id="food-list">
+          <div id="food-rows"></div>
+          <div class="food-total"><span>Total carbs</span><span class="food-total-val" id="food-total">0g</span></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="useCarbs()">Use these carbs</button>
+            <button class="btn btn-ghost" onclick="resetEstimate()">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inputs -->
+      <div class="card">
+        <div class="card-title">Dose inputs</div>
+        <div class="row2">
+          <div class="field">
+            <label>Current glucose (mg/dL)</label>
+            <input type="number" id="c-glucose" placeholder="e.g. 140" inputmode="numeric" oninput="onGlucoseInput()">
+          </div>
+          <div class="field">
+            <label>Carbs to eat (g)</label>
+            <input type="number" id="c-carbs" placeholder="e.g. 60" inputmode="numeric" oninput="calcDose()">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>Meal</label>
+            <select id="c-meal">
+              <option value="">Select</option>
+              <option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Actual units injected</label>
+            <input type="number" id="c-injected" placeholder="e.g. 8" step="0.5" inputmode="decimal">
+          </div>
+        </div>
+      </div>
+
+      <!-- Dose result -->
+      <div class="dose-result" id="dose-result">
+        <div class="dose-number" id="r-total">0.0</div>
+        <div class="dose-sub">suggested units (Humalog)</div>
+        <div class="dose-breakdown" id="r-breakdown"></div>
+        <div class="dose-iob-note" id="r-iob-note" style="display:none"></div>
+        <div class="dose-warning">⚕ Calculator aid only — always confirm with your prescribed dose before injecting.</div>
+      </div>
+
+      <button class="btn btn-primary" onclick="logMeal()" style="margin-bottom:8px">Log meal & set reminder</button>
+      <button class="btn btn-ghost" onclick="showSection('log')">Log glucose / insulin only</button>
+    </div>
+
+    <!-- QUICK LOG -->
+    <div id="sec-log" class="section">
+      <div class="card">
+        <div class="card-title">Glucose reading</div>
+        <div class="row2">
+          <div class="field"><label>Reading (mg/dL)</label><input type="number" id="l-glucose" placeholder="e.g. 120" inputmode="numeric"></div>
+          <div class="field"><label>Context</label>
+            <select id="l-gctx"><option>Fasting</option><option>Before meal</option><option>After meal</option><option>Bedtime</option><option>Random</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Insulin dose</div>
+        <div class="row2">
+          <div class="field"><label>Units injected</label><input type="number" id="l-units" placeholder="e.g. 8" step="0.5" inputmode="decimal"></div>
+          <div class="field"><label>Type</label>
+            <select id="l-itype"><option value="Rapid-acting">Rapid-acting (Humalog)</option><option value="Long-acting">Long-acting (Basal)</option><option value="Mixed">Mixed</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Meal (optional)</div>
+        <div class="field"><label>Description</label><input type="text" id="l-desc" placeholder="e.g. rice, dal, sabzi"></div>
+        <div class="row2">
+          <div class="field"><label>Carbs (g)</label><input type="number" id="l-carbs" placeholder="e.g. 60" inputmode="numeric"></div>
+          <div class="field"><label>Meal type</label>
+            <select id="l-mtype"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Notes</label><input type="text" id="l-notes" placeholder="Optional"></div>
+      </div>
+      <button class="btn btn-primary" onclick="saveLog()">Save entry</button>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="sec-history" class="section">
+      <div class="filter-row">
+        <button class="filter-btn active" id="hf-all" onclick="hFilter('all')">All</button>
+        <button class="filter-btn" id="hf-meal" onclick="hFilter('meal')">Meals</button>
+        <button class="filter-btn" id="hf-insulin" onclick="hFilter('insulin')">Insulin</button>
+        <button class="filter-btn" id="hf-glucose" onclick="hFilter('glucose')">Glucose</button>
+      </div>
+      <div id="history-list"></div>
+    </div>
+
+    <!-- INSIGHTS -->
+    <div id="sec-insights" class="section">
+      <div class="metrics" id="today-metrics"></div>
+      <div class="card" id="insights-card">
+        <div class="card-title">Trends (last 14 days)</div>
+        <div id="insights-body"><div class="empty-state">Log a few meals to see patterns</div></div>
+      </div>
+      <button class="btn btn-ghost" onclick="exportCSV()" style="margin-top:4px">Export CSV</button>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="sec-settings" class="section">
+      <div class="section-label">Your ratios</div>
+      <div class="card">
+        <div class="setting-item">
+          <div><div class="setting-name">ICR</div><div class="setting-desc">1 unit covers X grams of carbs</div></div>
+          <input class="setting-input" type="number" id="s-icr" placeholder="7" inputmode="numeric">
+        </div>
+        <div class="setting-item">
+          <div><div class="setting-name">ISF</div><div class="setting-desc">1 unit lowers glucose by X mg/dL</div></div>
+          <input class="setting-input" type="number" id="s-isf" placeholder="23" inputmode="numeric">
+        </div>
+        <div class="setting-item">
+          <div><div class="setting-name">Target glucose</div><div class="setting-desc">Pre-meal target (mg/dL)</div></div>
+          <input class="setting-input" type="number" id="s-target" placeholder="100" inputmode="numeric">
+        </div>
+        <div class="setting-item" style="border-bottom:none">
+          <div><div class="setting-name">Insulin duration</div><div class="setting-desc">Hours Humalog stays active</div></div>
+          <input class="setting-input" type="number" id="s-duration" placeholder="4" inputmode="numeric">
+        </div>
+      </div>
+
+      <div class="section-label">API key</div>
+      <div class="card">
+        <div class="setting-item" style="flex-direction:column;align-items:flex-start;gap:8px;border-bottom:none">
+          <div><div class="setting-name">Anthropic API key</div><div class="setting-desc">For AI carb estimation</div></div>
+          <input type="password" id="s-apikey" placeholder="sk-ant-..." style="width:100%;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--ink);font-family:'DM Mono',monospace;font-size:13px;padding:10px 12px;outline:none;">
+        </div>
+        <div class="note">Get your key at console.anthropic.com. Stored only on this device.</div>
+      </div>
+
+      <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:4px">Save settings</button>
+      <div class="note" style="margin-top:12px;text-align:center">Ratios set by your endocrinologist. ISF = 1700 ÷ TDD for mg/dL.</div>
+    </div>
+
+  </div><!-- end content -->
+
+  <!-- Post-meal modal overlay -->
+  <div id="post-modal" style="display:none;position:fixed;inset:0;background:rgba(26,22,18,.4);z-index:200;align-items:flex-end;justify-content:center">
+    <div style="background:var(--paper);border-radius:var(--radius) var(--radius) 0 0;padding:24px 20px 36px;width:100%;max-width:430px;box-shadow:var(--shadow-lg)">
+      <div style="font-family:'Lora',serif;font-size:18px;font-weight:600;margin-bottom:4px">Post-meal glucose</div>
+      <div style="font-size:13px;color:var(--ink3);margin-bottom:18px" id="modal-meal-info"></div>
+      <div class="field">
+        <label>Your reading now (mg/dL)</label>
+        <input type="number" id="modal-glucose" placeholder="e.g. 145" inputmode="numeric" style="font-size:22px;padding:14px;font-family:'DM Mono',monospace;">
+      </div>
+      <div class="outcome-card" id="modal-outcome"></div>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn btn-primary" onclick="savePostMeal()">Save reading</button>
+        <button class="btn btn-ghost" onclick="closePostModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end app -->
+
+<nav class="nav">
+  <button class="nav-btn active" id="nav-dose" onclick="showSection('dose')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+    Dose
+  </button>
+  <button class="nav-btn" id="nav-log" onclick="showSection('log')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+    Log
+  </button>
+  <button class="nav-btn" id="nav-history" onclick="showSection('history');renderHistory()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/></svg>
+    History
+  </button>
+  <button class="nav-btn" id="nav-insights" onclick="showSection('insights');renderInsights()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="m7 16 4-4 4 4 4-6"/></svg>
+    Insights
+  </button>
+  <button class="nav-btn" id="nav-settings" onclick="showSection('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </button>
+</nav>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+let entries = JSON.parse(localStorage.getItem('gt_entries') || '[]');
+let settings = JSON.parse(localStorage.getItem('gt_settings') || '{"icr":7,"isf":23,"target":100,"duration":4,"apikey":""}');
+let estimatedItems = [];
+let hFilterVal = 'all';
+let openMealId = null; // meal waiting for post-meal glucose
+
+// ── Init ───────────────────────────────────────────────────────────────
+function init() {
+  const d = new Date();
+  document.getElementById('header-date').textContent =
+    d.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'short' });
+  loadSettings();
+  checkOpenMeal();
+  updateIOBPill();
+}
+
+function loadSettings() {
+  document.getElementById('s-icr').value = settings.icr || '';
+  document.getElementById('s-isf').value = settings.isf || '';
+  document.getElementById('s-target').value = settings.target || '';
+  document.getElementById('s-duration').value = settings.duration || 4;
+  document.getElementById('s-apikey').value = settings.apikey || '';
+}
+
+function saveSettings() {
+  settings = {
+    icr: parseFloat(document.getElementById('s-icr').value) || 7,
+    isf: parseFloat(document.getElementById('s-isf').value) || 23,
+    target: parseFloat(document.getElementById('s-target').value) || 100,
+    duration: parseFloat(document.getElementById('s-duration').value) || 4,
+    apikey: document.getElementById('s-apikey').value.trim()
+  };
+  localStorage.setItem('gt_settings', JSON.stringify(settings));
+  loadSettings();
+  const btn = document.querySelector('#sec-settings .btn-primary');
+  const o = btn.textContent; btn.textContent = 'Saved ✓'; btn.disabled = true;
+  setTimeout(() => { btn.textContent = o; btn.disabled = false; }, 1500);
+}
+
+// ── Navigation ──────────────────────────────────────────────────────────
+function showSection(s) {
+  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('sec-' + s).classList.add('active');
+  document.getElementById('nav-' + s).classList.add('active');
+}
+
+function nowDT() {
+  const d = new Date();
+  return { date: d.toISOString().split('T')[0], time: d.toTimeString().slice(0,5), ts: d.getTime() };
+}
+
+// ── IOB Calculation ─────────────────────────────────────────────────────
+function getIOB() {
+  const durationMs = (settings.duration || 4) * 60 * 60 * 1000;
+  const now = Date.now();
+  let iob = 0;
+  entries.forEach(e => {
+    if (e.type !== 'insulin') return;
+    const age = now - e.ts;
+    if (age >= durationMs) return;
+    // linear decay
+    const remaining = 1 - (age / durationMs);
+    iob += (e.units || 0) * remaining;
+  });
+  return Math.max(0, iob);
+}
+
+function updateIOBPill() {
+  const iob = getIOB();
+  const pill = document.getElementById('iob-pill');
+  if (iob >= 0.5) {
+    pill.textContent = 'IOB: ' + iob.toFixed(1) + 'u';
+    pill.classList.add('show');
+  } else {
+    pill.classList.remove('show');
+  }
+}
+
+function showIOBWarning(iob) {
+  const el = document.getElementById('iob-warning');
+  if (iob >= 0.5) {
+    el.textContent = '⚠ You have ~' + iob.toFixed(1) + ' units of Humalog still active from your last dose. This has been subtracted from your correction dose below.';
+    el.classList.add('show');
+  } else {
+    el.classList.remove('show');
+  }
+}
+
+// ── Wait time (Humalog, mg/dL) ──────────────────────────────────────────
+function getWaitTime(glucose) {
+  if (glucose < 80)  return { color:'blue',  icon:'🍽', title:'Eat before injecting', sub:'Your glucose is low (' + glucose + ' mg/dL). Eat first, inject during or just after your meal to avoid a hypo.' };
+  if (glucose <= 110) return { color:'green', icon:'✅', title:'Inject and eat within 5 min', sub:'Glucose is near target (' + glucose + ' mg/dL). Inject now and eat shortly after.' };
+  if (glucose <= 150) return { color:'amber', icon:'⏱', title:'Wait 10–15 min after injecting', sub:'Glucose is ' + glucose + ' mg/dL. Give Humalog a head start before the carbs arrive.' };
+  if (glucose <= 200) return { color:'amber', icon:'⏱', title:'Wait 15–20 min after injecting', sub:'Glucose is ' + glucose + ' mg/dL. Let Humalog start working before eating.' };
+  return { color:'red', icon:'⚠', title:'Wait 20–30 min after injecting', sub:'Glucose is high (' + glucose + ' mg/dL). Inject now, wait before eating. Consider checking for ketones.' };
+}
+
+function onGlucoseInput() {
+  const g = parseFloat(document.getElementById('c-glucose').value);
+  const banner = document.getElementById('wait-banner');
+  if (!isNaN(g) && g > 0) {
+    const w = getWaitTime(g);
+    banner.className = 'wait-banner show ' + w.color;
+    document.getElementById('wait-icon').textContent = w.icon;
+    document.getElementById('wait-title').textContent = w.title;
+    document.getElementById('wait-sub').textContent = w.sub;
+  } else {
+    banner.className = 'wait-banner';
+  }
+  const iob = getIOB();
+  showIOBWarning(iob);
+  calcDose();
+}
+
+// ── Dose Calculation ────────────────────────────────────────────────────
+function calcDose() {
+  const glucose = parseFloat(document.getElementById('c-glucose').value);
+  const carbs = parseFloat(document.getElementById('c-carbs').value);
+  const box = document.getElementById('dose-result');
+  if (isNaN(glucose) && isNaN(carbs)) { box.classList.remove('show'); return; }
+  box.classList.add('show');
+
+  const icr = settings.icr || 7, isf = settings.isf || 23, target = settings.target || 100;
+  const iob = getIOB();
+  let carbDose = 0, corrDose = 0, iobAdj = 0;
+  if (!isNaN(carbs) && carbs > 0) carbDose = carbs / icr;
+  if (!isNaN(glucose) && glucose > target) {
+    const rawCorr = (glucose - target) / isf;
+    iobAdj = Math.min(iob, rawCorr);
+    corrDose = Math.max(0, rawCorr - iobAdj);
+  }
+  const total = Math.max(0, carbDose + corrDose);
+  document.getElementById('r-total').textContent = total.toFixed(1);
+
+  let b = '';
+  if (carbDose > 0) b += `<div class="dose-line"><span>Carb dose (${carbs}g ÷ ${icr})</span><span>${carbDose.toFixed(1)}u</span></div>`;
+  if (!isNaN(glucose) && glucose > target) {
+    const rawCorr = (glucose - target) / isf;
+    b += `<div class="dose-line"><span>Correction (${glucose} → ${target} mg/dL)</span><span>${rawCorr.toFixed(1)}u</span></div>`;
+  }
+  if (!isNaN(glucose) && glucose <= target) {
+    b += `<div class="dose-line"><span>Glucose at/below target</span><span>+0</span></div>`;
+  }
+  document.getElementById('r-breakdown').innerHTML = b;
+
+  const iobNote = document.getElementById('r-iob-note');
+  if (iobAdj > 0) {
+    iobNote.textContent = '−' + iobAdj.toFixed(1) + 'u deducted for active insulin on board (IOB)';
+    iobNote.style.display = 'block';
+  } else {
+    iobNote.style.display = 'none';
+  }
+}
+
+// ── AI Carb Estimation ──────────────────────────────────────────────────
+async function estimateCarbs() {
+  const text = document.getElementById('food-text').value.trim();
+  if (!text) return;
+  const apikey = settings.apikey;
+  if (!apikey) { alert('Please add your Anthropic API key in Settings first.'); return; }
+  const btn = document.getElementById('estimate-btn');
+  const loading = document.getElementById('ai-loading');
+  btn.style.display = 'none'; loading.classList.add('show');
+  document.getElementById('food-list').classList.remove('show');
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apikey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 800,
+        messages: [{ role: 'user', content: `Nutrition assistant for a diabetic in India/UAE. User ate: "${text}". Return ONLY a JSON array, no markdown, no extra text. Each item: {"food":"name","portion":"amount","carbs":number}. Use accurate carb values in grams. Indian and Middle Eastern foods should use realistic local portion sizes.` }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    const raw = data.content?.find(b => b.type === 'text')?.text || '[]';
+    estimatedItems = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    renderFoodItems();
+  } catch(e) {
+    alert('Error: ' + (e.message || e.toString()));
+  }
+  btn.style.display = 'block'; loading.classList.remove('show');
+}
+
+function renderFoodItems() {
+  document.getElementById('food-rows').innerHTML = estimatedItems.map((item, i) => `
+    <div class="food-row">
+      <div><div class="food-name">${item.food}</div><div class="food-portion">${item.portion}</div></div>
+      <input class="food-carb-input" type="number" value="${item.carbs}" min="0" inputmode="numeric" oninput="updateCarb(${i},this.value)">
+    </div>`).join('');
+  updateTotal();
+  document.getElementById('food-list').classList.add('show');
+}
+
+function updateCarb(i, v) { estimatedItems[i].carbs = parseFloat(v) || 0; updateTotal(); }
+function updateTotal() {
+  const t = estimatedItems.reduce((s, i) => s + (parseFloat(i.carbs) || 0), 0);
+  document.getElementById('food-total').textContent = Math.round(t) + 'g';
+}
+function useCarbs() {
+  const t = estimatedItems.reduce((s, i) => s + (parseFloat(i.carbs) || 0), 0);
+  document.getElementById('c-carbs').value = Math.round(t);
+  calcDose();
+}
+function resetEstimate() {
+  document.getElementById('food-text').value = '';
+  document.getElementById('food-list').classList.remove('show');
+  estimatedItems = [];
+}
+
+// ── Log Meal ────────────────────────────────────────────────────────────
+function logMeal() {
+  const glucose = document.getElementById('c-glucose').value;
+  const carbs = document.getElementById('c-carbs').value;
+  const meal = document.getElementById('c-meal').value;
+  const injected = document.getElementById('c-injected').value;
+  const desc = estimatedItems.length ? estimatedItems.map(i => i.food).join(', ') : (document.getElementById('food-text').value || 'Meal');
+  const { date, time, ts } = nowDT();
+  const icr = settings.icr||7, isf = settings.isf||23, target = settings.target||100;
+  const iob = getIOB();
+  let carbDose=0, corrDose=0;
+  if (carbs) carbDose = parseFloat(carbs)/icr;
+  if (glucose && parseFloat(glucose)>target) {
+    const raw = (parseFloat(glucose)-target)/isf;
+    corrDose = Math.max(0, raw - Math.min(iob, raw));
+  }
+  const suggested = (carbDose+corrDose).toFixed(1);
+  const mealId = ts;
+
+  if (glucose) entries.unshift({ id: ts-2, type:'glucose', date, time, ts: ts-2, glucose:parseFloat(glucose), context:'Before meal', mealId });
+  if (injected) entries.unshift({ id: ts-1, type:'insulin', date, time, ts: ts-1, units:parseFloat(injected), insulinType:'Rapid-acting', mealId });
+  entries.unshift({ id: mealId, type:'meal', date, time, ts: mealId, desc, carbs:parseFloat(carbs)||0, mealType:meal||'Meal', suggested, injected:parseFloat(injected)||null, status:'open' });
+
+  localStorage.setItem('gt_entries', JSON.stringify(entries));
+  updateIOBPill();
+
+  // Set Apple Reminders via URL scheme (90 min from now)
+  const reminderTime = new Date(Date.now() + 90*60*1000);
+  const reminderTitle = encodeURIComponent('Log post-meal glucose');
+  window.location.href = `x-apple-reminderkit://reminders/new?title=${reminderTitle}`;
+
+  // Reset form
+  document.getElementById('c-glucose').value='';
+  document.getElementById('c-carbs').value='';
+  document.getElementById('c-meal').value='';
+  document.getElementById('c-injected').value='';
+  document.getElementById('wait-banner').className='wait-banner';
+  document.getElementById('iob-warning').classList.remove('show');
+  document.getElementById('dose-result').classList.remove('show');
+  resetEstimate();
+
+  openMealId = mealId;
+  checkOpenMeal();
+
+  const btn = document.querySelector('#sec-dose .btn-primary');
+  const o = btn.textContent; btn.textContent = 'Logged ✓ — reminder set'; btn.disabled = true;
+  setTimeout(() => { btn.textContent = o; btn.disabled = false; }, 2500);
+}
+
+// ── Open meal / post-meal flow ──────────────────────────────────────────
+function checkOpenMeal() {
+  const open = entries.find(e => e.type==='meal' && e.status==='open');
+  const cta = document.getElementById('post-meal-cta');
+  if (open) {
+    openMealId = open.id;
+    const elapsed = Math.round((Date.now() - open.ts) / 60000);
+    document.getElementById('post-meal-cta-sub').textContent =
+      elapsed < 90
+        ? `${open.desc || 'Last meal'} · ${open.mealType || ''} · Check in ${90-elapsed} min`
+        : `${open.desc || 'Last meal'} · ${open.mealType || ''} · Ready to log`;
+    cta.style.display = 'block';
+  } else {
+    openMealId = null;
+    cta.style.display = 'none';
+  }
+}
+
+function showPostMealModal() {
+  const open = entries.find(e => e.id===openMealId);
+  if (!open) return;
+  document.getElementById('modal-meal-info').textContent =
+    (open.desc || 'Meal') + ' · ' + (open.mealType || '') + ' · ' + open.carbs + 'g carbs · suggested ' + open.suggested + 'u';
+  document.getElementById('modal-glucose').value = '';
+  document.getElementById('modal-outcome').className = 'outcome-card';
+  document.getElementById('modal-outcome').innerHTML = '';
+  document.getElementById('post-modal').style.display = 'flex';
+}
+
+function closePostModal() {
+  document.getElementById('post-modal').style.display = 'none';
+}
+
+function savePostMeal() {
+  const g = parseFloat(document.getElementById('modal-glucose').value);
+  if (isNaN(g)) { alert('Please enter a glucose reading.'); return; }
+  const { date, time, ts } = nowDT();
+  const target = settings.target || 100;
+  const diff = g - target;
+
+  // Show outcome
+  let cls, title, sub;
+  if (g < 70) { cls='low'; title='⚠ Below target — watch for hypo symptoms'; sub='Reading: '+g+' mg/dL. If you feel symptoms, have 15g fast carbs now.'; }
+  else if (g <= target+20) { cls='good'; title='✓ Well controlled'; sub='Reading: '+g+' mg/dL, '+Math.abs(diff)+' mg/dL '+(diff>=0?'above':'below')+' target. Dose was well calibrated.'; }
+  else if (g <= target+60) { cls='high'; title='Slightly above target'; sub='Reading: '+g+' mg/dL, '+diff+' mg/dL above target. Consider a small correction if needed.'; }
+  else { cls='high'; title='Above target'; sub='Reading: '+g+' mg/dL, '+diff+' mg/dL above target. Your ICR or pre-bolus timing may need review.'; }
+
+  const oc = document.getElementById('modal-outcome');
+  oc.className = 'outcome-card show ' + cls;
+  oc.innerHTML = '<div class="outcome-title">'+title+'</div><div class="outcome-sub">'+sub+'</div>';
+
+  // Save entry + close open meal
+  entries.unshift({ id: ts, type:'glucose', date, time, ts, glucose:g, context:'After meal', mealId:openMealId });
+  const mealIdx = entries.findIndex(e => e.id===openMealId);
+  if (mealIdx >= 0) { entries[mealIdx].status='complete'; entries[mealIdx].postGlucose=g; }
+  localStorage.setItem('gt_entries', JSON.stringify(entries));
+  checkOpenMeal();
+
+  setTimeout(() => closePostModal(), 2200);
+}
+
+// ── Quick Log ───────────────────────────────────────────────────────────
+function saveLog() {
+  const { date, time, ts } = nowDT();
+  const glucose = document.getElementById('l-glucose').value;
+  const units = document.getElementById('l-units').value;
+  const carbs = document.getElementById('l-carbs').value;
+  const desc = document.getElementById('l-desc').value;
+  if (glucose) entries.unshift({ id: ts, type:'glucose', date, time, ts, glucose:parseFloat(glucose), context:document.getElementById('l-gctx').value });
+  if (units) entries.unshift({ id: ts+1, type:'insulin', date, time, ts: ts+1, units:parseFloat(units), insulinType:document.getElementById('l-itype').value });
+  if (carbs||desc) entries.unshift({ id: ts+2, type:'meal', date, time, ts: ts+2, desc:desc||'Meal', carbs:parseFloat(carbs)||0, mealType:document.getElementById('l-mtype').value, notes:document.getElementById('l-notes').value, status:'manual' });
+  localStorage.setItem('gt_entries', JSON.stringify(entries));
+  updateIOBPill();
+  ['l-glucose','l-units','l-carbs','l-desc','l-notes'].forEach(id => document.getElementById(id).value='');
+  const btn = document.querySelector('#sec-log .btn-primary');
+  const o = btn.textContent; btn.textContent = 'Saved ✓'; btn.disabled=true;
+  setTimeout(() => { btn.textContent=o; btn.disabled=false; }, 1500);
+}
+
+// ── History ─────────────────────────────────────────────────────────────
+function hFilter(f) {
+  hFilterVal = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('hf-'+f).classList.add('active');
+  renderHistory();
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  const filtered = hFilterVal==='all' ? entries : entries.filter(e => e.type===hFilterVal);
+  if (!filtered.length) { el.innerHTML='<div class="empty-state">No entries yet</div>'; return; }
+  el.innerHTML = filtered.map(e => {
+    let badge='', title='', detail='';
+    if (e.type==='meal') {
+      const complete = e.status==='complete';
+      badge = `<span class="log-badge ${complete?'badge-complete':'badge-meal'}">${complete?'Complete':'Meal'}</span>`;
+      title = e.desc || 'Meal';
+      detail = e.carbs+'g carbs'+(e.suggested?' · suggested '+e.suggested+'u':'')+(e.postGlucose?' · post: '+e.postGlucose+' mg/dL':'');
+    }
+    if (e.type==='insulin') { badge='<span class="log-badge badge-insulin">Insulin</span>'; title=e.units+'u '+e.insulinType; detail=''; }
+    if (e.type==='glucose') { badge='<span class="log-badge badge-glucose">Glucose</span>'; title=e.glucose+' mg/dL'; detail=e.context||''; }
+    return `<div class="log-entry">
+      <div class="log-time">${e.time}<br>${fmtD(e.date)}</div>
+      <div class="log-body">${badge}<div class="log-title">${title}</div>${detail?`<div class="log-detail">${detail}</div>`:''}</div>
+      <button class="log-del" onclick="delEntry(${e.id})" aria-label="Delete">×</button>
+    </div>`;
+  }).join('');
+}
+
+function delEntry(id) {
+  entries = entries.filter(e => e.id!==id);
+  localStorage.setItem('gt_entries', JSON.stringify(entries));
+  renderHistory();
+  checkOpenMeal();
+  updateIOBPill();
+}
+
+// ── Insights ─────────────────────────────────────────────────────────────
+function renderInsights() {
+  const today = new Date().toISOString().split('T')[0];
+  const todayE = entries.filter(e => e.date===today);
+  const todayGlucose = todayE.filter(e=>e.type==='glucose').map(e=>e.glucose);
+  const todayCarbs = todayE.filter(e=>e.type==='meal').reduce((s,e)=>s+e.carbs,0);
+  const todayInsulin = todayE.filter(e=>e.type==='insulin').reduce((s,e)=>s+e.units,0);
+  const avgG = todayGlucose.length ? Math.round(todayGlucose.reduce((a,b)=>a+b,0)/todayGlucose.length) : null;
+
+  document.getElementById('today-metrics').innerHTML = `
+    <div class="metric ${avgG?avgG<=settings.target+20?'green':'amber':''}">
+      <div class="metric-val">${avgG||'—'}</div><div class="metric-lbl">Avg glucose today</div>
+    </div>
+    <div class="metric"><div class="metric-val">${todayCarbs||'—'}</div><div class="metric-lbl">Total carbs (g)</div></div>
+    <div class="metric"><div class="metric-val">${todayInsulin||'—'}</div><div class="metric-lbl">Insulin today (u)</div></div>
+    <div class="metric"><div class="metric-val">${todayE.filter(e=>e.type==='meal').length||'—'}</div><div class="metric-lbl">Meals logged</div></div>
+  `;
+
+  // Completed meal loop analysis
+  const completed = entries.filter(e=>e.type==='meal'&&e.status==='complete'&&e.postGlucose);
+  const body = document.getElementById('insights-body');
+  if (completed.length < 3) { body.innerHTML='<div class="empty-state">Log a few complete meals<br>(pre + post glucose) to see patterns</div>'; return; }
+
+  const target = settings.target||100;
+  const avgPost = Math.round(completed.reduce((s,e)=>s+e.postGlucose,0)/completed.length);
+  const onTarget = completed.filter(e=>e.postGlucose<=target+20).length;
+  const pct = Math.round((onTarget/completed.length)*100);
+
+  body.innerHTML = `
+    <div class="insight-row"><span>Meals analysed</span><span class="insight-val">${completed.length}</span></div>
+    <div class="insight-row"><span>Avg post-meal glucose</span><span class="insight-val" style="color:${avgPost<=target+20?'var(--green)':'var(--amber)'}">${avgPost} mg/dL</span></div>
+    <div class="insight-row"><span>Within target after meal</span><span class="insight-val" style="color:${pct>=70?'var(--green)':'var(--amber)'}">${pct}%</span></div>
+    <div class="insight-row"><span>ICR (current)</span><span class="insight-val">1:${settings.icr}</span></div>
+    ${avgPost > target+40 ? '<div style="font-size:12px;color:var(--amber);padding:10px 0;line-height:1.6">Post-meal readings are consistently high. Your ICR may need to be lower (more insulin per gram). Discuss with your doctor.</div>' : ''}
+    ${avgPost < target-20 ? '<div style="font-size:12px;color:var(--red);padding:10px 0;line-height:1.6">Post-meal readings are running low. Your ICR may be too aggressive. Discuss with your doctor.</div>' : ''}
+  `;
+}
+
+// ── Export ───────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!entries.length) { alert('No entries to export.'); return; }
+  const rows = [['Date','Time','Type','Description','Carbs(g)','Glucose(mg/dL)','Insulin(u)','Context','Suggested(u)','Post-meal glucose']];
+  entries.forEach(e => rows.push([e.date,e.time,e.type,e.desc||e.insulinType||'',e.carbs||'',e.glucose||'',e.units||'',e.context||e.mealType||'',e.suggested||'',e.postGlucose||'']));
+  const csv = rows.map(r=>r.map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='glucose_log.csv'; a.click();
+}
+
+function fmtD(d) { const[y,m,day]=d.split('-'); return day+'/'+m; }
+
+init();
+</script>
+</body>
+</html>
